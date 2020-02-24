@@ -1,6 +1,8 @@
 import re
 import sys
 import inspect
+from builtins import input
+from __future__ import print_function
 try:
     import readline  # noqa: adds readline semantics to input()
 except ImportError:
@@ -16,6 +18,15 @@ except ImportError:
     except ImportError:
         def get_terminal_size(fallback=(80, 24)):
             return fallback
+
+# Python 2 compat for inspect.signature.
+signature_fn = None
+try:
+    signature_fn = inspect.signature
+except:
+    import funcsigs
+    signature_fn = funcsigs.signature
+
 
 __version__ = '1.2.1'
 __all__ = (
@@ -132,7 +143,7 @@ class Placeholder:
         return self.name.upper()
 
 
-class Room:
+class Room(object):
     """A generic room object that can be used by game code."""
 
     _directions = {}
@@ -290,7 +301,7 @@ class Bag(set):
 def _register(command, func, context=None, kwargs={}):
     """Register func as a handler for the given command."""
     pattern = Pattern(command, context)
-    sig = inspect.signature(func)
+    sig = signature_fn(func)
     func_argnames = set(sig.parameters)
     when_argnames = set(pattern.argnames) | set(kwargs.keys())
     if func_argnames != when_argnames:
